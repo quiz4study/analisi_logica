@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz di Analisi Logica con Feedback Errori</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f3f4f6; padding: 20px; color: #374151; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #1e40af; text-align: center; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #6b7280; margin-bottom: 30px; }
+        .question-block { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #e5e7eb; position: relative; }
+        .question-text { font-size: 1.1em; margin-bottom: 15px; font-weight: 500; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        .highlight { color: #2563eb; font-weight: bold; }
+        .options-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        @media (min-width: 600px) { .options-grid { grid-template-columns: repeat(3, 1fr); } }
+        .option-btn { padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; background: white; cursor: pointer; transition: all 0.2s; text-align: left; font-size: 0.95em; }
+        .option-btn:hover:not(:disabled) { border-color: #3b82f6; background-color: #eff6ff; }
+        .correct { background-color: #d1fae5 !important; border-color: #10b981 !important; color: #065f46; font-weight: bold; }
+        .incorrect { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b; }
+        .hint-btn { background: #fef3c7; border: 1px solid #f59e0b; color: #92400e; padding: 4px 10px; border-radius: 6px; font-size: 0.8em; cursor: pointer; white-space: nowrap; }
+        .hint-text, .error-feedback { display: none; margin-top: 10px; padding: 12px; border-radius: 6px; font-size: 0.9em; line-height: 1.4; }
+        .hint-text { background: #fffbeb; border-left: 4px solid #f59e0b; color: #92400e; font-style: italic; }
+        .error-feedback { background: #fef2f2; border-left: 4px solid #ef4444; color: #991b1b; }
+        .score-box { margin-top: 30px; padding: 20px; background: #eff6ff; border-radius: 8px; text-align: center; border: 1px solid #bfdbfe; }
+        .score-num { font-size: 2em; font-weight: bold; color: #2563eb; }
+        .restart-btn { margin-top: 15px; padding: 10px 25px; background: #2563eb; color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Esercitazione di Analisi Logica</h1>
+        <p class="subtitle">Se sbagli, ti spiegheremo perché. Usa "Aiuto" per un suggerimento preventivo.</p>
+
+        <div id="quiz-content"></div>
+
+        <div class="score-box">
+            <div>Il tuo Punteggio</div>
+            <div id="score-display" class="score-num">0 / 25</div>
+            <button onclick="window.location.reload()" class="restart-btn">Ricomincia da capo</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            { q: "Ascolto **la musica** in cuffia.", options: ["Comp. oggetto", "Comp. di specificazione", "Comp. di termine"], correct: 0, hint: "Risponde alla domanda: Chi? Che cosa?", explain: "È un complemento oggetto perché l'azione del verbo 'ascoltare' ricade direttamente su 'la musica'." },
+            { q: "Il cancello **del giardino** è aperto.", options: ["Comp. di specificazione", "Comp. di denominazione", "Comp. di luogo"], correct: 0, hint: "Risponde alla domanda: Di chi? Di che cosa?", explain: "È specificazione perché precisa a cosa appartiene o si riferisce il cancello." },
+            { q: "Il comune **di Milano** ha emanato un'ordinanza.", options: ["Comp. di denominazione", "Comp. di specificazione", "Comp. di termine"], correct: 0, hint: "Dà un nome proprio a un nome comune.", explain: "È denominazione perché 'Milano' è il nome proprio che denomina il 'comune'." },
+            { q: "Consegna il pacco **al portiere**.", options: ["Comp. di termine", "Comp. oggetto", "Comp. d'agente"], correct: 0, hint: "Risponde alla domanda: A chi?", explain: "È un complemento di termine perché indica la persona a cui è destinato l'oggetto." },
+            { q: "La lettera è stata scritta **da Paolo**.", options: ["Comp. d'agente", "Comp. di causa", "Comp. di modo"], correct: 0, hint: "In una frase passiva, chi fa l'azione?", explain: "In una frase passiva, chi compie l'azione è il complemento d'agente." },
+            { q: "I ragazzi giocano **in cortile**.", options: ["Stato in luogo", "Moto a luogo", "Moto per luogo"], correct: 0, hint: "Indica dove si svolge l'azione restando lì.", explain: "È stato in luogo perché indica dove si trovano i ragazzi mentre giocano." },
+            { q: "Stasera andiamo **in pizzeria**.", options: ["Moto a luogo", "Stato in luogo", "Moto da luogo"], correct: 0, hint: "Indica la meta di un movimento.", explain: "È moto a luogo perché indica la destinazione verso cui ci si muove." },
+            { q: "Siamo appena tornati **dalle vacanze**.", options: ["Moto da luogo", "Moto per luogo", "Moto a luogo"], correct: 0, hint: "Indica il luogo da cui si proviene.", explain: "È moto da luogo perché indica la provenienza del movimento." },
+            { q: "Siamo passati **attraverso i campi**.", options: ["Moto per luogo", "Stato in luogo", "Moto a luogo"], correct: 0, hint: "Indica un transito o un passaggio.", explain: "È moto per luogo perché indica il luogo che viene attraversato." },
+            { q: "La torta sarà pronta **a mezzogiorno**.", options: ["Tempo determinato", "Tempo continuato", "Comp. di termine"], correct: 0, hint: "Indica un momento preciso nel tempo.", explain: "È tempo determinato perché indica l'ora esatta in cui avverrà l'azione." },
+            { q: "Ha piovuto **per ore**.", options: ["Tempo continuato", "Tempo determinato", "Comp. di causa"], correct: 0, hint: "Indica la durata di un'azione.", explain: "È tempo continuato perché indica per quanto tempo si è protratta la pioggia." },
+            { q: "Taglia il pane **col coltello**.", options: ["Comp. di mezzo", "Comp. di modo", "Comp. di compagnia"], correct: 0, hint: "Con quale strumento?", explain: "È un complemento di mezzo perché il coltello è lo strumento usato per tagliare." },
+            { q: "Mi ha parlato **con dolcezza**.", options: ["Comp. di modo", "Comp. di unione", "Comp. di mezzo"], correct: 0, hint: "In che modo?", explain: "È un complemento di modo perché descrive la maniera in cui è stata fatta l'azione." },
+            { q: "Non dormo **per la preoccupazione**.", options: ["Comp. di causa", "Comp. di fine", "Comp. di modo"], correct: 0, hint: "Qual è il motivo/la causa?", explain: "È causa perché la preoccupazione è il motivo scatenante del non dormire." },
+            { q: "Studiamo **per il successo** del progetto.", options: ["Comp. di fine", "Comp. di causa", "Comp. di termine"], correct: 0, hint: "Qual è l'obiettivo finale?", explain: "È un complemento di fine perché il successo è lo scopo che si vuole raggiungere." },
+            { q: "Sono andato a fare shopping **con Anna**.", options: ["Comp. di compagnia", "Comp. di unione", "Comp. di modo"], correct: 0, hint: "Insieme a chi?", explain: "È compagnia perché si riferisce a un essere animato che accompagna il soggetto." },
+            { q: "Mi piace il caffè **con lo zucchero**.", options: ["Comp. di unione", "Comp. di compagnia", "Comp. di mezzo"], correct: 0, hint: "Insieme a quale cosa?", explain: "È unione perché si riferisce a una cosa inanimata che accompagna un'altra cosa." },
+            { q: "Il nonno racconta storie **sulla guerra**.", options: ["Comp. di argomento", "Comp. di specificazione", "Comp. di denominazione"], correct: 0, hint: "Qual è il tema del discorso?", explain: "È argomento perché indica il tema o l'oggetto di cui si sta parlando." },
+            { q: "Hai perso **le chiavi**?", options: ["Comp. oggetto", "Comp. di termine", "Comp. di specificazione"], correct: 0, hint: "Cosa hai perso?", explain: "È complemento oggetto perché risponde alla domanda 'che cosa?' dopo il verbo." },
+            { q: "La fine **del film** è stata commovente.", options: ["Comp. di specificazione", "Comp. di denominazione", "Comp. di termine"], correct: 0, hint: "Di che cosa?", explain: "È specificazione perché specifica a quale opera si riferisce il termine 'fine'." },
+            { q: "Il deserto **del Sahara** è vastissimo.", options: ["Comp. di denominazione", "Comp. di specificazione", "Stato in luogo"], correct: 0, hint: "Nome proprio del deserto.", explain: "È denominazione perché attribuisce il nome proprio a un nome comune geografico." },
+            { q: "Ho inviato un messaggio **a Giorgio**.", options: ["Comp. di termine", "Comp. oggetto", "Comp. d'agente"], correct: 0, hint: "A chi è rivolto?", explain: "È termine perché indica il destinatario finale dell'azione di inviare." },
+            { q: "Il guasto è stato riparato **dal tecnico**.", options: ["Comp. d'agente", "Comp. di termine", "Comp. di causa efficiente"], correct: 0, hint: "Chi ha riparato?", explain: "In una frase passiva, l'essere animato che agisce è il complemento d'agente." },
+            { q: "Il gatto è rimasto **sul tetto**.", options: ["Stato in luogo", "Moto per luogo", "Moto a luogo"], correct: 0, hint: "Dove si trova fermo?", explain: "È stato in luogo perché indica la posizione statica del gatto." },
+            { q: "Domani voleremo **a Londra**.", options: ["Moto a luogo", "Stato in luogo", "Moto da luogo"], correct: 0, hint: "Destinazione del volo.", explain: "È moto a luogo perché indica la meta finale del movimento." }
+        ];
+
+        let score = 0;
+        const answeredQuestions = new Set();
+
+        function toggleHint(idx) {
+            const h = document.getElementById('hint-' + idx);
+            h.style.display = (h.style.display === 'block') ? 'none' : 'block';
+        }
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-content');
+            container.innerHTML = '';
+            questions.forEach((question, index) => {
+                const qDiv = document.createElement('div');
+                qDiv.className = "question-block";
+                qDiv.innerHTML = `
+                    <div class="question-text">
+                        <span>${index + 1}. ${question.q.replace(/\*\*(.*?)\*\*/g, '<span class="highlight">$1</span>')}</span>
+                        <button class="hint-btn" onclick="toggleHint(${index})">Aiuto</button>
+                    </div>
+                    <div id="hint-${index}" class="hint-text">💡 Suggerimento: ${question.hint}</div>
+                    <div id="error-${index}" class="error-feedback">❌ Errore. ${question.explain}</div>
+                    <div class="options-grid" id="opts-${index}"></div>
+                `;
+                container.appendChild(qDiv);
+                
+                const optGrid = document.getElementById('opts-' + index);
+                question.options.forEach((opt, optIdx) => {
+                    const btn = document.createElement('button');
+                    btn.className = "option-btn";
+                    btn.innerText = opt;
+                    btn.onclick = () => checkAnswer(btn, index, optIdx);
+                    optGrid.appendChild(btn);
+                });
+            });
+        }
+
+        function checkAnswer(selectedBtn, qIdx, optIdx) {
+            if (answeredQuestions.has(qIdx)) return;
+            answeredQuestions.add(qIdx);
+            
+            const parent = selectedBtn.parentElement;
+            const buttons = parent.getElementsByTagName('button');
+            const correctIdx = questions[qIdx].correct;
+            const errorDiv = document.getElementById('error-' + qIdx);
+            const hintBtn = selectedBtn.closest('.question-block').querySelector('.hint-btn');
+
+            hintBtn.disabled = true;
+            hintBtn.style.opacity = "0.3";
+
+            if (optIdx === correctIdx) {
+                selectedBtn.classList.add('correct');
+                score++;
+            } else {
+                selectedBtn.classList.add('incorrect');
+                buttons[correctIdx].classList.add('correct');
+                errorDiv.style.display = 'block'; // Mostra spiegazione in caso di errore
+            }
+            document.getElementById('score-display').innerText = score + " / 25";
+        }
+
+        window.onload = renderQuiz;
+    </script>
+</body>
+</html>
