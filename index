@@ -133,4 +133,5 @@
         window.onload = renderQuiz;
     </script>
 </body>
+
 </html>
