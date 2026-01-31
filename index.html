@@ -25,53 +25,73 @@
         .score-box { margin-top: 30px; padding: 20px; background: #eff6ff; border-radius: 8px; text-align: center; border: 1px solid #bfdbfe; }
         .score-num { font-size: 2em; font-weight: bold; color: #2563eb; }
         .restart-btn { margin-top: 15px; padding: 10px 25px; background: #2563eb; color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        .repeat-msg { color: #b91c1c; font-weight: bold; margin-top: 10px; display: none; padding: 10px; border: 1px dashed #f87171; border-radius: 8px; background: #fff5f5; }
+        .repeat-btn-active { display: none; margin-top: 10px; padding: 10px 20px; background: #dc2626; color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Esercitazione di Analisi Logica</h1>
-        <p class="subtitle">Se sbagli, ti spiegheremo perché. Usa "Aiuto" per un suggerimento preventivo.</p>
+        <p class="subtitle">Le posizioni delle risposte sono ora rimescolate domanda per domanda.</p>
 
         <div id="quiz-content"></div>
 
         <div class="score-box">
             <div>Il tuo Punteggio</div>
             <div id="score-display" class="score-num">0 / 25</div>
-            <button onclick="window.location.reload()" class="restart-btn">Ricomincia da capo</button>
+            
+            <div id="repeat-feedback" class="repeat-msg">
+                Il tuo punteggio è inferiore a 15/25. Ti consigliamo di ripetere l'esercitazione per fissare meglio i concetti.
+            </div>
+            
+            <button id="main-restart" onclick="window.location.reload()" class="restart-btn">Ricomincia da capo</button>
+            <br>
+            <button id="repeat-btn" onclick="window.location.reload()" class="repeat-btn-active">Ripeti l'esercitazione</button>
         </div>
     </div>
 
     <script>
-        const questions = [
-            { q: "Ascolto **la musica** in cuffia.", options: ["Comp. oggetto", "Comp. di specificazione", "Comp. di termine"], correct: 0, hint: "Risponde alla domanda: Chi? Che cosa?", explain: "È un complemento oggetto perché l'azione del verbo 'ascoltare' ricade direttamente su 'la musica'." },
-            { q: "Il cancello **del giardino** è aperto.", options: ["Comp. di specificazione", "Comp. di denominazione", "Comp. di luogo"], correct: 0, hint: "Risponde alla domanda: Di chi? Di che cosa?", explain: "È specificazione perché precisa a cosa appartiene o si riferisce il cancello." },
-            { q: "Il comune **di Milano** ha emanato un'ordinanza.", options: ["Comp. di denominazione", "Comp. di specificazione", "Comp. di termine"], correct: 0, hint: "Dà un nome proprio a un nome comune.", explain: "È denominazione perché 'Milano' è il nome proprio che denomina il 'comune'." },
-            { q: "Consegna il pacco **al portiere**.", options: ["Comp. di termine", "Comp. oggetto", "Comp. d'agente"], correct: 0, hint: "Risponde alla domanda: A chi?", explain: "È un complemento di termine perché indica la persona a cui è destinato l'oggetto." },
-            { q: "La lettera è stata scritta **da Paolo**.", options: ["Comp. d'agente", "Comp. di causa", "Comp. di modo"], correct: 0, hint: "In una frase passiva, chi fa l'azione?", explain: "In una frase passiva, chi compie l'azione è il complemento d'agente." },
-            { q: "I ragazzi giocano **in cortile**.", options: ["Stato in luogo", "Moto a luogo", "Moto per luogo"], correct: 0, hint: "Indica dove si svolge l'azione restando lì.", explain: "È stato in luogo perché indica dove si trovano i ragazzi mentre giocano." },
-            { q: "Stasera andiamo **in pizzeria**.", options: ["Moto a luogo", "Stato in luogo", "Moto da luogo"], correct: 0, hint: "Indica la meta di un movimento.", explain: "È moto a luogo perché indica la destinazione verso cui ci si muove." },
-            { q: "Siamo appena tornati **dalle vacanze**.", options: ["Moto da luogo", "Moto per luogo", "Moto a luogo"], correct: 0, hint: "Indica il luogo da cui si proviene.", explain: "È moto da luogo perché indica la provenienza del movimento." },
-            { q: "Siamo passati **attraverso i campi**.", options: ["Moto per luogo", "Stato in luogo", "Moto a luogo"], correct: 0, hint: "Indica un transito o un passaggio.", explain: "È moto per luogo perché indica il luogo che viene attraversato." },
-            { q: "La torta sarà pronta **a mezzogiorno**.", options: ["Tempo determinato", "Tempo continuato", "Comp. di termine"], correct: 0, hint: "Indica un momento preciso nel tempo.", explain: "È tempo determinato perché indica l'ora esatta in cui avverrà l'azione." },
-            { q: "Ha piovuto **per ore**.", options: ["Tempo continuato", "Tempo determinato", "Comp. di causa"], correct: 0, hint: "Indica la durata di un'azione.", explain: "È tempo continuato perché indica per quanto tempo si è protratta la pioggia." },
-            { q: "Taglia il pane **col coltello**.", options: ["Comp. di mezzo", "Comp. di modo", "Comp. di compagnia"], correct: 0, hint: "Con quale strumento?", explain: "È un complemento di mezzo perché il coltello è lo strumento usato per tagliare." },
-            { q: "Mi ha parlato **con dolcezza**.", options: ["Comp. di modo", "Comp. di unione", "Comp. di mezzo"], correct: 0, hint: "In che modo?", explain: "È un complemento di modo perché descrive la maniera in cui è stata fatta l'azione." },
-            { q: "Non dormo **per la preoccupazione**.", options: ["Comp. di causa", "Comp. di fine", "Comp. di modo"], correct: 0, hint: "Qual è il motivo/la causa?", explain: "È causa perché la preoccupazione è il motivo scatenante del non dormire." },
-            { q: "Studiamo **per il successo** del progetto.", options: ["Comp. di fine", "Comp. di causa", "Comp. di termine"], correct: 0, hint: "Qual è l'obiettivo finale?", explain: "È un complemento di fine perché il successo è lo scopo che si vuole raggiungere." },
-            { q: "Sono andato a fare shopping **con Anna**.", options: ["Comp. di compagnia", "Comp. di unione", "Comp. di modo"], correct: 0, hint: "Insieme a chi?", explain: "È compagnia perché si riferisce a un essere animato che accompagna il soggetto." },
-            { q: "Mi piace il caffè **con lo zucchero**.", options: ["Comp. di unione", "Comp. di compagnia", "Comp. di mezzo"], correct: 0, hint: "Insieme a quale cosa?", explain: "È unione perché si riferisce a una cosa inanimata che accompagna un'altra cosa." },
-            { q: "Il nonno racconta storie **sulla guerra**.", options: ["Comp. di argomento", "Comp. di specificazione", "Comp. di denominazione"], correct: 0, hint: "Qual è il tema del discorso?", explain: "È argomento perché indica il tema o l'oggetto di cui si sta parlando." },
-            { q: "Hai perso **le chiavi**?", options: ["Comp. oggetto", "Comp. di termine", "Comp. di specificazione"], correct: 0, hint: "Cosa hai perso?", explain: "È complemento oggetto perché risponde alla domanda 'che cosa?' dopo il verbo." },
-            { q: "La fine **del film** è stata commovente.", options: ["Comp. di specificazione", "Comp. di denominazione", "Comp. di termine"], correct: 0, hint: "Di che cosa?", explain: "È specificazione perché specifica a quale opera si riferisce il termine 'fine'." },
-            { q: "Il deserto **del Sahara** è vastissimo.", options: ["Comp. di denominazione", "Comp. di specificazione", "Stato in luogo"], correct: 0, hint: "Nome proprio del deserto.", explain: "È denominazione perché attribuisce il nome proprio a un nome comune geografico." },
-            { q: "Ho inviato un messaggio **a Giorgio**.", options: ["Comp. di termine", "Comp. oggetto", "Comp. d'agente"], correct: 0, hint: "A chi è rivolto?", explain: "È termine perché indica il destinatario finale dell'azione di inviare." },
-            { q: "Il guasto è stato riparato **dal tecnico**.", options: ["Comp. d'agente", "Comp. di termine", "Comp. di causa efficiente"], correct: 0, hint: "Chi ha riparato?", explain: "In una frase passiva, l'essere animato che agisce è il complemento d'agente." },
-            { q: "Il gatto è rimasto **sul tetto**.", options: ["Stato in luogo", "Moto per luogo", "Moto a luogo"], correct: 0, hint: "Dove si trova fermo?", explain: "È stato in luogo perché indica la posizione statica del gatto." },
-            { q: "Domani voleremo **a Londra**.", options: ["Moto a luogo", "Stato in luogo", "Moto da luogo"], correct: 0, hint: "Destinazione del volo.", explain: "È moto a luogo perché indica la meta finale del movimento." }
+        const rawQuestions = [
+            { q: "Ascolto **la musica** in cuffia.", options: ["Comp. oggetto", "Comp. di specificazione", "Comp. di termine"], correct: "Comp. oggetto", hint: "Risponde alla domanda: Chi? Che cosa?", explain: "È un complemento oggetto perché l'azione del verbo 'ascoltare' ricade direttamente su 'la musica'." },
+            { q: "Il cancello **del giardino** è aperto.", options: ["Comp. di specificazione", "Comp. di denominazione", "Comp. di luogo"], correct: "Comp. di specificazione", hint: "Risponde alla domanda: Di chi? Di che cosa?", explain: "È specificazione perché precisa a cosa appartiene o si riferisce il cancello." },
+            { q: "Il comune **di Milano** ha emanato un'ordinanza.", options: ["Comp. di denominazione", "Comp. di specificazione", "Comp. di termine"], correct: "Comp. di denominazione", hint: "Dà un nome proprio a un nome comune.", explain: "È denominazione perché 'Milano' è il nome proprio che denomina il 'comune'." },
+            { q: "Consegna il pacco **al portiere**.", options: ["Comp. di termine", "Comp. oggetto", "Comp. d'agente"], correct: "Comp. di termine", hint: "Risponde alla domanda: A chi?", explain: "È un complemento di termine perché indica la persona a cui è destinato l'oggetto." },
+            { q: "La lettera è stata scritta **da Paolo**.", options: ["Comp. d'agente", "Comp. di causa", "Comp. di modo"], correct: "Comp. d'agente", hint: "In una frase passiva, chi fa l'azione?", explain: "In una frase passiva, chi compie l'azione è il complemento d'agente." },
+            { q: "I ragazzi giocano **in cortile**.", options: ["Stato in luogo", "Moto a luogo", "Moto per luogo"], correct: "Stato in luogo", hint: "Indica dove si svolge l'azione restando lì.", explain: "È stato in luogo perché indica dove si trovano i ragazzi mentre giocano." },
+            { q: "Stasera andiamo **in pizzeria**.", options: ["Moto a luogo", "Stato in luogo", "Moto da luogo"], correct: "Moto a luogo", hint: "Indica la meta di un movimento.", explain: "È moto a luogo perché indica la destinazione verso cui ci si muove." },
+            { q: "Siamo appena tornati **dalle vacanze**.", options: ["Moto da luogo", "Moto per luogo", "Moto a luogo"], correct: "Moto da luogo", hint: "Indica il luogo da cui si proviene.", explain: "È moto da luogo perché indica la provenienza del movimento." },
+            { q: "Siamo passati **attraverso i campi**.", options: ["Moto per luogo", "Stato in luogo", "Moto a luogo"], correct: "Moto per luogo", hint: "Indica un transito o un passaggio.", explain: "È moto per luogo perché indica il luogo che viene attraversato." },
+            { q: "La torta sarà pronta **a mezzogiorno**.", options: ["Tempo determinato", "Tempo continuato", "Comp. di termine"], correct: "Tempo determinato", hint: "Indica un momento preciso nel tempo.", explain: "È tempo determinato perché indica l'ora esatta in cui avverrà l'azione." },
+            { q: "Ha piovuto **per ore**.", options: ["Tempo continuato", "Tempo determinato", "Comp. di causa"], correct: "Tempo continuato", hint: "Indica la durata di un'azione.", explain: "È tempo continuato perché indica per quanto tempo si è protratta la pioggia." },
+            { q: "Taglia il pane **col coltello**.", options: ["Comp. di mezzo", "Comp. di modo", "Comp. di compagnia"], correct: "Comp. di mezzo", hint: "Con quale strumento?", explain: "È un complemento di mezzo perché il coltello è lo strumento usato per tagliare." },
+            { q: "Mi ha parlato **con dolcezza**.", options: ["Comp. di modo", "Comp. di unione", "Comp. di mezzo"], correct: "Comp. di modo", hint: "In che modo?", explain: "È un complemento di modo perché descrive la maniera in cui è stata fatta l'azione." },
+            { q: "Non dormo **per la preoccupazione**.", options: ["Comp. di causa", "Comp. di fine", "Comp. di modo"], correct: "Comp. di causa", hint: "Qual è il motivo/la causa?", explain: "È causa perché la preoccupazione è il motivo scatenante del non dormire." },
+            { q: "Studiamo **per il successo** del progetto.", options: ["Comp. di fine", "Comp. di causa", "Comp. di termine"], correct: "Comp. di fine", hint: "Qual è l'obiettivo finale?", explain: "È un complemento di fine perché il successo è lo scopo che si vuole raggiungere." },
+            { q: "Sono andato a fare shopping **con Anna**.", options: ["Comp. di compagnia", "Comp. di unione", "Comp. di modo"], correct: "Comp. di compagnia", hint: "Insieme a chi?", explain: "È compagnia perché si riferisce a un essere animato che accompagna il soggetto." },
+            { q: "Mi piace il caffè **con lo zucchero**.", options: ["Comp. di unione", "Comp. di compagnia", "Comp. di mezzo"], correct: "Comp. di unione", hint: "Insieme a quale cosa?", explain: "È unione perché si riferisce a una cosa inanimata che accompagna un'altra cosa." },
+            { q: "Il nonno racconta storie **sulla guerra**.", options: ["Comp. di argomento", "Comp. di specificazione", "Comp. di denominazione"], correct: "Comp. di argomento", hint: "Qual è il tema del discorso?", explain: "È argomento perché indica il tema o l'oggetto di cui si sta parlando." },
+            { q: "Hai perso **le chiavi**?", options: ["Comp. oggetto", "Comp. di termine", "Comp. di specificazione"], correct: "Comp. oggetto", hint: "Cosa hai perso?", explain: "È complemento oggetto perché risponde alla domanda 'che cosa?' dopo il verbo." },
+            { q: "La fine **del film** è stata commovente.", options: ["Comp. di specificazione", "Comp. di denominazione", "Comp. di termine"], correct: "Comp. di specificazione", hint: "Di che cosa?", explain: "È specificazione perché specifica a quale opera si riferisce il termine 'fine'." },
+            { q: "Il deserto **del Sahara** è vastissimo.", options: ["Comp. di denominazione", "Comp. di specificazione", "Stato in luogo"], correct: "Comp. di denominazione", hint: "Nome proprio del deserto.", explain: "È denominazione perché attribuisce il nome proprio a un nome comune geografico." },
+            { q: "Ho inviato un messaggio **a Giorgio**.", options: ["Comp. di termine", "Comp. oggetto", "Comp. d'agente"], correct: "Comp. di termine", hint: "A chi è rivolto?", explain: "È termine perché indica il destinatario finale dell'azione di inviare." },
+            { q: "Il guasto è stato riparato **dal tecnico**.", options: ["Comp. d'agente", "Comp. di termine", "Comp. di causa efficiente"], correct: "Comp. d'agente", hint: "Chi ha riparato?", explain: "In una frase passiva, l'essere animato che agisce è il complemento d'agente." },
+            { q: "Il gatto è rimasto **sul tetto**.", options: ["Stato in luogo", "Moto per luogo", "Moto a luogo"], correct: "Stato in luogo", hint: "Dove si trova fermo?", explain: "È stato in luogo perché indica la posizione statica del gatto." },
+            { q: "Domani voleremo **a Londra**.", options: ["Moto a luogo", "Stato in luogo", "Moto da luogo"], correct: "Moto a luogo", hint: "Destinazione del volo.", explain: "È moto a luogo perché indica la meta finale del movimento." }
         ];
 
         let score = 0;
+        const totalQuestions = rawQuestions.length;
         const answeredQuestions = new Set();
+
+        // Funzione per rimescolare un array in modo sicuro
+        function shuffleArray(array) {
+            let arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
 
         function toggleHint(idx) {
             const h = document.getElementById('hint-' + idx);
@@ -81,7 +101,11 @@
         function renderQuiz() {
             const container = document.getElementById('quiz-content');
             container.innerHTML = '';
-            questions.forEach((question, index) => {
+            
+            rawQuestions.forEach((question, index) => {
+                // Rimescoliamo le opzioni SPECIFICAMENTE per questa riga
+                const currentOptions = shuffleArray(question.options);
+                
                 const qDiv = document.createElement('div');
                 qDiv.className = "question-block";
                 qDiv.innerHTML = `
@@ -96,42 +120,61 @@
                 container.appendChild(qDiv);
                 
                 const optGrid = document.getElementById('opts-' + index);
-                question.options.forEach((opt, optIdx) => {
+                currentOptions.forEach((optText) => {
                     const btn = document.createElement('button');
                     btn.className = "option-btn";
-                    btn.innerText = opt;
-                    btn.onclick = () => checkAnswer(btn, index, optIdx);
+                    btn.innerText = optText;
+                    btn.onclick = () => checkAnswer(btn, index, optText, question.correct);
                     optGrid.appendChild(btn);
                 });
             });
         }
 
-        function checkAnswer(selectedBtn, qIdx, optIdx) {
+        function checkAnswer(selectedBtn, qIdx, selectedText, correctText) {
             if (answeredQuestions.has(qIdx)) return;
             answeredQuestions.add(qIdx);
             
             const parent = selectedBtn.parentElement;
             const buttons = parent.getElementsByTagName('button');
-            const correctIdx = questions[qIdx].correct;
             const errorDiv = document.getElementById('error-' + qIdx);
             const hintBtn = selectedBtn.closest('.question-block').querySelector('.hint-btn');
 
             hintBtn.disabled = true;
             hintBtn.style.opacity = "0.3";
 
-            if (optIdx === correctIdx) {
+            if (selectedText === correctText) {
                 selectedBtn.classList.add('correct');
                 score++;
             } else {
                 selectedBtn.classList.add('incorrect');
-                buttons[correctIdx].classList.add('correct');
-                errorDiv.style.display = 'block'; // Mostra spiegazione in caso di errore
+                for (let btn of buttons) {
+                    if (btn.innerText === correctText) {
+                        btn.classList.add('correct');
+                    }
+                }
+                errorDiv.style.display = 'block';
             }
-            document.getElementById('score-display').innerText = score + " / 25";
+            
+            document.getElementById('score-display').innerText = score + " / " + totalQuestions;
+
+            if (answeredQuestions.size === totalQuestions) {
+                showFinalFeedback();
+            }
+        }
+
+        function showFinalFeedback() {
+            const repeatMsg = document.getElementById('repeat-feedback');
+            const repeatBtn = document.getElementById('repeat-btn');
+            const mainRestart = document.getElementById('main-restart');
+
+            if (score < 15) {
+                repeatMsg.style.display = 'block';
+                repeatBtn.style.display = 'inline-block';
+                mainRestart.style.display = 'none';
+            }
         }
 
         window.onload = renderQuiz;
     </script>
 </body>
-
 </html>
